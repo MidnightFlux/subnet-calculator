@@ -176,12 +176,39 @@ const updateNodeRemark = (node, remark) => {
   updateSaveLink();
 };
 
+// Serialize column visibility to compact binary string
+const serializeColumnVisibility = () => {
+  const columns = ['subnet', 'netmask', 'range', 'useable', 'hosts', 'remark', 'divide', 'join'];
+  let binary = '';
+  columns.forEach(col => {
+    binary += visibleColumns[col] ? '1' : '0';
+  });
+  // Convert binary to hex for shorter URL
+  const hex = parseInt(binary, 2).toString(16).padStart(2, '0');
+  return hex;
+};
+
+// Deserialize and apply column visibility from hex string
+const deserializeColumnVisibility = (hex) => {
+  const columns = ['subnet', 'netmask', 'range', 'useable', 'hosts', 'remark', 'divide', 'join'];
+  const binary = parseInt(hex, 16).toString(2).padStart(8, '0');
+  columns.forEach((col, index) => {
+    visibleColumns[col] = binary[index] === '1';
+    // Update checkbox state
+    const checkbox = document.getElementById(`cb_${col}`);
+    if (checkbox) {
+      checkbox.checked = visibleColumns[col];
+    }
+  });
+};
+
 // Update just the bookmark link without full table recreation
 const updateSaveLink = () => {
   const saveLink = document.getElementById('saveLink');
   if (saveLink) {
     const remarks = collectRemarks(rootSubnet);
-    saveLink.href = `index.html?network=${inetNtoa(curNetwork)}&mask=${curMask}&division=${binToAscii(nodeToString(rootSubnet))}&remarks=${remarks}`;
+    const cols = serializeColumnVisibility();
+    saveLink.href = `index.html?network=${inetNtoa(curNetwork)}&mask=${curMask}&division=${binToAscii(nodeToString(rootSubnet))}&remarks=${remarks}&cols=${cols}`;
   }
 };
 
@@ -425,6 +452,12 @@ const calcOnLoad = () => {
   if (args.network && args.mask && args.division) {
     document.forms.calc.elements.network.value = args.network;
     document.forms.calc.elements.netbits.value = args.mask;
+    
+    // Load column visibility if present
+    if (args.cols) {
+      deserializeColumnVisibility(args.cols);
+    }
+    
     updateNetwork();
     
     const division = asciiToBin(args.division);
