@@ -5,6 +5,7 @@ const visibleColumns = {
   range: true,
   useable: true,
   hosts: true,
+  remark: true,
   divide: true,
   join: true,
 };
@@ -13,8 +14,9 @@ const visibleColumns = {
 let curNetwork = 0;
 let curMask = 0;
 
-// Root subnet node: [depth, numChildren, children]
+// Root subnet node: [depth, numChildren, children, remark]
 // children is either null (leaf) or [leftChild, rightChild]
+// remark is an optional string for leaf nodes
 let rootSubnet;
 
 /**
@@ -60,7 +62,7 @@ const subnetNetmask = (mask) => networkAddress(0xffffffff, mask);
  */
 
 // Create a new leaf node
-const createNode = () => [0, 0, null];
+const createNode = () => [0, 0, null, ''];
 
 // Divide a node into two children
 const divideNode = (node) => {
@@ -98,6 +100,27 @@ const updateDepthChildren = (node) => {
 
 // Serialize subnet tree to binary string (0=leaf, 1=internal)
 const nodeToString = (node) => node[2] ? `1${nodeToString(node[2][0])}${nodeToString(node[2][1])}` : '0';
+
+// Collect all remarks from leaf nodes in tree order
+const collectRemarks = (node) => {
+  if (node[2]) {
+    return collectRemarks(node[2][0]) + collectRemarks(node[2][1]);
+  }
+  return node[3] ? encodeURIComponent(node[3]) + ',' : ',';
+};
+
+// Apply remarks to leaf nodes in tree order
+const applyRemarks = (node, remarks) => {
+  if (node[2]) {
+    const remaining = applyRemarks(node[2][0], remarks);
+    return applyRemarks(node[2][1], remaining);
+  }
+  if (remarks.length > 0) {
+    const remark = remarks.shift();
+    node[3] = remark ? decodeURIComponent(remark) : '';
+  }
+  return remarks;
+};
 
 // Encode binary string to compact ASCII representation
 const binToAscii = (str) => {
@@ -144,6 +167,22 @@ const loadNode = (curNode, division) => {
   let remaining = loadNode(curNode[2][0], division.slice(1));
   remaining = loadNode(curNode[2][1], remaining);
   return remaining;
+};
+
+// Update remark for a node
+const updateNodeRemark = (node, remark) => {
+  node[3] = remark;
+  // Update the bookmark link after remark change
+  updateSaveLink();
+};
+
+// Update just the bookmark link without full table recreation
+const updateSaveLink = () => {
+  const saveLink = document.getElementById('saveLink');
+  if (saveLink) {
+    const remarks = collectRemarks(rootSubnet);
+    saveLink.href = `index.html?network=${inetNtoa(curNetwork)}&mask=${curMask}&division=${binToAscii(nodeToString(rootSubnet))}&remarks=${remarks}`;
+  }
 };
 
 /**
@@ -238,10 +277,7 @@ const recreateTables = () => {
   if (joinHeader) joinHeader.colSpan = rootSubnet[0] > 0 ? rootSubnet[0] : 1;
 
   // Update bookmark link
-  const saveLink = document.getElementById('saveLink');
-  if (saveLink) {
-    saveLink.href = `index.html?network=${inetNtoa(curNetwork)}&mask=${curMask}&division=${binToAscii(nodeToString(rootSubnet))}`;
-  }
+  updateSaveLink();
 };
 
 const createRow = (calcbody, node, address, mask, labels, depth) => {
@@ -318,6 +354,19 @@ const createRow = (calcbody, node, address, mask, labels, depth) => {
       row.appendChild(cell);
     }
 
+    // Remark cell
+    if (visibleColumns.remark) {
+      const cell = document.createElement('td');
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = node[3] || '';
+      input.style.width = '120px';
+      input.placeholder = 'Add remark...';
+      input.onchange = () => updateNodeRemark(node, input.value);
+      cell.appendChild(input);
+      row.appendChild(cell);
+    }
+
     // Divide action cell
     if (visibleColumns.divide) {
       const cell = document.createElement('td');
@@ -383,6 +432,13 @@ const calcOnLoad = () => {
     if (division !== '0') {
       loadNode(rootSubnet, division);
     }
+    
+    // Load remarks if present
+    if (args.remarks) {
+      const remarkList = args.remarks.split(',');
+      applyRemarks(rootSubnet, remarkList);
+    }
+    
     recreateTables();
   } else {
     updateNetwork();
