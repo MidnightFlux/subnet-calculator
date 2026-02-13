@@ -35,10 +35,10 @@ const inetNtoa = (addr) => [
 const inetAton = (addrStr) => {
   const match = addrStr.match(/^([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$/);
   if (!match) return null;
-  
+
   const octets = match.slice(1, 5).map(Number);
   if (octets.some(o => o < 0 || o > 255)) return null;
-  
+
   return (octets[0] << 24) | (octets[1] << 16) | (octets[2] << 8) | octets[3];
 };
 
@@ -127,7 +127,7 @@ const binToAscii = (str) => {
   let out = '';
   let char = 0;
   let bit = 0;
-  
+
   for (const ch of str) {
     if (ch === '1') char |= 1 << bit;
     bit++;
@@ -138,7 +138,7 @@ const binToAscii = (str) => {
     }
   }
   if (bit > 0) out += char.toString(16);
-  
+
   return `${str.length}.${out}`;
 };
 
@@ -146,11 +146,11 @@ const binToAscii = (str) => {
 const asciiToBin = (str) => {
   const match = str.match(/([0-9]+)\.([0-9a-f]+)/);
   if (!match) return '0';
-  
+
   const len = parseInt(match[1], 10);
   const encoded = match[2];
   let out = '';
-  
+
   for (let i = 0; i < len; i++) {
     const ch = parseInt(encoded.charAt(Math.floor(i / 4)), 16);
     const pos = i % 4;
@@ -162,7 +162,7 @@ const asciiToBin = (str) => {
 // Load subnet tree from binary string
 const loadNode = (curNode, division) => {
   if (division.charAt(0) === '0') return division.slice(1);
-  
+
   curNode[2] = [createNode(), createNode()];
   let remaining = loadNode(curNode[2][0], division.slice(1));
   remaining = loadNode(curNode[2][1], remaining);
@@ -223,11 +223,11 @@ const parseQueryString = (str) => {
   const query = str ? str : location.search;
   const queryPart = query.charAt(0) === '?' ? query.substring(1) : query;
   const args = {};
-  
+
   if (queryPart) {
     queryPart.split('&').forEach(field => {
       const [key, value] = field.split('=');
-      args[decodeURIComponent(key.replace(/\+/g, ' '))] = 
+      args[decodeURIComponent(key.replace(/\+/g, ' '))] =
         decodeURIComponent((value || '').replace(/\+/g, ' '));
     });
   }
@@ -314,7 +314,7 @@ const createRow = (calcbody, node, address, mask, labels, depth) => {
   if (node[2]) {
     // Internal node - recurse to children
     const [leftChild, rightChild] = node[2];
-    
+
     // Process left child
     const leftLabels = [...labels, mask + 1, leftChild[1], leftChild];
     createRow(calcbody, leftChild, address, mask + 1, leftLabels, depth - 1);
@@ -439,7 +439,7 @@ const createRow = (calcbody, node, address, mask, labels, depth) => {
         cell.rowSpan = rowspan > 1 ? rowspan : 1;
         cell.colSpan = colspan > 1 ? colspan : 1;
         cell.className = i === (labels.length / 3) - 1 ? 'maskSpan' : 'maskSpanJoinable';
-        
+
         if (i !== (labels.length / 3) - 1) {
           cell.onclick = () => { joinNode(targetNode); recreateTables(); };
         }
@@ -461,16 +461,16 @@ const toggleColumn = (checkbox) => {
 
 const calcOnLoad = () => {
   const args = parseQueryString();
-  
+
   if (args.network && args.mask && args.division) {
     document.forms.calc.elements.network.value = args.network;
     document.forms.calc.elements.netbits.value = args.mask;
-    
+
     // Load column visibility if present
     if (args.cols) {
       deserializeColumnVisibility(args.cols);
     }
-    
+
     // Load reserve values if present
     if (args.rf) {
       document.forms.calc.elements.reserve_front.value = args.rf;
@@ -478,21 +478,21 @@ const calcOnLoad = () => {
     if (args.re) {
       document.forms.calc.elements.reserve_end.value = args.re;
     }
-    
+
     updateNetwork();
-    
+
     const division = asciiToBin(args.division);
     rootSubnet = createNode();
     if (division !== '0') {
       loadNode(rootSubnet, division);
     }
-    
+
     // Load remarks if present
     if (args.remarks) {
       const remarkList = args.remarks.split(',');
       applyRemarks(rootSubnet, remarkList);
     }
-    
+
     recreateTables();
   } else {
     updateNetwork();
