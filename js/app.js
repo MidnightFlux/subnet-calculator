@@ -224,7 +224,9 @@ const updateSaveLink = () => {
     const form = document.forms.calc;
     const reserveFront = form.elements.reserve_front?.value || '1';
     const reserveEnd = form.elements.reserve_end?.value || '1';
-    saveLink.href = `index.html?network=${inetNtoa(curNetwork)}&mask=${curMask}&division=${binToAscii(nodeToString(rootSubnet))}&remarks=${remarks}&cols=${cols}&rf=${reserveFront}&re=${reserveEnd}`;
+    const networkName = form.elements.network_name?.value || '';
+    const encodedNetworkName = networkName ? encodeURIComponent(networkName) : '';
+    saveLink.href = `index.html?network=${inetNtoa(curNetwork)}&mask=${curMask}&division=${binToAscii(nodeToString(rootSubnet))}&remarks=${remarks}&cols=${cols}&rf=${reserveFront}&re=${reserveEnd}&name=${encodedNetworkName}`;
   }
 };
 
@@ -494,6 +496,11 @@ const calcOnLoad = () => {
     }
     if (args.re) {
       document.forms.calc.elements.reserve_end.value = args.re;
+    }
+
+    // Load network name if present
+    if (args.name) {
+      document.forms.calc.elements.network_name.value = decodeURIComponent(args.name);
     }
 
     updateNetwork();
