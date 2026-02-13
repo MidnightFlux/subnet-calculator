@@ -20,6 +20,19 @@ let curMask = 0;
 let rootSubnet;
 
 /**
+ * Input Validation
+ */
+
+// Validate reserve IP inputs - minimum value is 1
+const validateReserveInput = (input) => {
+  const value = parseInt(input.value, 10);
+  if (isNaN(value) || value < 1) {
+    input.value = '1';
+  }
+  recreateTables();
+};
+
+/**
  * IP Address Utility Functions
  */
 
