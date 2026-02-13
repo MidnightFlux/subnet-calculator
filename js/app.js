@@ -384,33 +384,12 @@ const createRow = (calcbody, node, address, mask, labels, depth) => {
     // Remark cell
     if (visibleColumns.remark) {
       const cell = document.createElement('td');
-      cell.className = 'remark-cell';
       const input = document.createElement('input');
       input.type = 'text';
       input.value = node[3] || '';
-      input.className = 'remark-input';
+      input.style.width = '120px';
       input.placeholder = 'Add remark...';
       input.onchange = () => updateNodeRemark(node, input.value);
-      
-      // Auto-adjust width based on content length
-      const adjustWidth = () => {
-        const minWidth = 80;
-        // Create a hidden span to measure actual text width
-        const measurer = document.createElement('span');
-        measurer.style.cssText = 'visibility:hidden;position:absolute;white-space:nowrap;font-family:Arial,Verdana,sans-serif;font-size:80%;padding:2px 4px;';
-        measurer.textContent = input.value || input.placeholder;
-        document.body.appendChild(measurer);
-        const textWidth = measurer.offsetWidth;
-        document.body.removeChild(measurer);
-        // Add small buffer for cursor and borders
-        const contentWidth = Math.max(minWidth, textWidth + 12);
-        input.style.width = contentWidth + 'px';
-      };
-      
-      input.oninput = adjustWidth;
-      // Initial adjustment
-      setTimeout(adjustWidth, 0);
-      
       cell.appendChild(input);
       row.appendChild(cell);
     }

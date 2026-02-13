@@ -64,15 +64,3 @@ p {
   border-color: #66afe9;
   outline: none;
 }
-
-/* Remark column styles - auto-adjust based on content */
-.calc td.remark-cell {
-  white-space: nowrap;
-  min-width: 80px;
-}
-
-.calc input[type="text"].remark-input {
-  min-width: 80px;
-  width: 100%;
-  box-sizing: border-box;
-}
