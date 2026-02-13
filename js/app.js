@@ -342,12 +342,12 @@ const createRow = (calcbody, node, address, mask, labels, depth) => {
 
     if (mask === 32) {
       addressRange = inetNtoa(addressFirst);
-      useableRange = addressRange;
-      numHosts = 1;
+      useableRange = 'N/A';
+      numHosts = 0;
     } else if (mask === 31) {
       addressRange = `${inetNtoa(addressFirst)} - ${inetNtoa(addressLast)}`;
-      useableRange = addressRange;
-      numHosts = 2;
+      useableRange = 'N/A';
+      numHosts = 0;
     } else {
       addressRange = `${inetNtoa(addressFirst)} - ${inetNtoa(addressLast)}`;
       if (useableFirst > useableLast) {
