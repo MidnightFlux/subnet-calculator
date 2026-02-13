@@ -208,7 +208,10 @@ const updateSaveLink = () => {
   if (saveLink) {
     const remarks = collectRemarks(rootSubnet);
     const cols = serializeColumnVisibility();
-    saveLink.href = `index.html?network=${inetNtoa(curNetwork)}&mask=${curMask}&division=${binToAscii(nodeToString(rootSubnet))}&remarks=${remarks}&cols=${cols}`;
+    const form = document.forms.calc;
+    const reserveFront = form.elements.reserve_front?.value || '1';
+    const reserveEnd = form.elements.reserve_end?.value || '1';
+    saveLink.href = `index.html?network=${inetNtoa(curNetwork)}&mask=${curMask}&division=${binToAscii(nodeToString(rootSubnet))}&remarks=${remarks}&cols=${cols}&rf=${reserveFront}&re=${reserveEnd}`;
   }
 };
 
@@ -324,11 +327,16 @@ const createRow = (calcbody, node, address, mask, labels, depth) => {
     const row = document.createElement('tr');
     calcbody.appendChild(row);
 
+    // Get reserve counts from form
+    const form = document.forms.calc;
+    const reserveFront = parseInt(form.elements.reserve_front?.value || '1', 10) || 0;
+    const reserveEnd = parseInt(form.elements.reserve_end?.value || '1', 10) || 0;
+
     // Calculate address ranges
     const addressFirst = address;
     const addressLast = subnetLastAddress(address, mask);
-    const useableFirst = address + 1;
-    const useableLast = addressLast - 1;
+    const useableFirst = address + reserveFront;
+    const useableLast = addressLast - reserveEnd;
 
     let addressRange, useableRange, numHosts;
 
@@ -342,8 +350,13 @@ const createRow = (calcbody, node, address, mask, labels, depth) => {
       numHosts = 2;
     } else {
       addressRange = `${inetNtoa(addressFirst)} - ${inetNtoa(addressLast)}`;
-      useableRange = `${inetNtoa(useableFirst)} - ${inetNtoa(useableLast)}`;
-      numHosts = useableLast - useableFirst + 1;
+      if (useableFirst > useableLast) {
+        useableRange = 'N/A';
+        numHosts = 0;
+      } else {
+        useableRange = `${inetNtoa(useableFirst)} - ${inetNtoa(useableLast)}`;
+        numHosts = useableLast - useableFirst + 1;
+      }
     }
 
     // Subnet address cell
@@ -456,6 +469,14 @@ const calcOnLoad = () => {
     // Load column visibility if present
     if (args.cols) {
       deserializeColumnVisibility(args.cols);
+    }
+    
+    // Load reserve values if present
+    if (args.rf) {
+      document.forms.calc.elements.reserve_front.value = args.rf;
+    }
+    if (args.re) {
+      document.forms.calc.elements.reserve_end.value = args.re;
     }
     
     updateNetwork();
