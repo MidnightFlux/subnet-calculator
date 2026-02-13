@@ -400,7 +400,7 @@ const createRow = (calcbody, node, address, mask, labels, depth) => {
       const input = document.createElement('input');
       input.type = 'text';
       input.value = node[3] || '';
-      input.style.width = '150px';
+      input.style.width = '200px';
       input.placeholder = 'Add remark...';
       input.onchange = () => updateNodeRemark(node, input.value);
       cell.appendChild(input);
