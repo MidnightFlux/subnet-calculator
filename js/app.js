@@ -367,7 +367,11 @@ const createRow = (calcbody, node, address, mask, labels, depth) => {
         useableRange = 'N/A';
         numHosts = 0;
       } else {
-        useableRange = `${inetNtoa(useableFirst)} - ${inetNtoa(useableLast)}`;
+        if (useableFirst === useableLast) {
+          useableRange = inetNtoa(useableFirst);
+        } else {
+          useableRange = `${inetNtoa(useableFirst)} - ${inetNtoa(useableLast)}`;
+        }
         numHosts = useableLast - useableFirst + 1;
       }
     }
